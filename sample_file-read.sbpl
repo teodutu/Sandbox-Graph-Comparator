@@ -1,0 +1,8 @@
+(deny default)
+(allow file-read*
+	(regex #"*.text")
+	(require-all
+		(vnode-type REGULAR-FILE)
+		(require-any
+			(regex #"[A-Z]*")
+			(literal "asdf.log"))))

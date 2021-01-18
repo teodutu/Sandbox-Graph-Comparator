@@ -1,0 +1,15 @@
+{
+    "file-read*": [
+		[
+			["regex", "#\"*.text\""]
+		],
+		[
+			["vnode-type", "REGULAR-FILE"],
+			["regex", "#\"[A-Z]*\""]
+		],
+		[
+			["vnode-type", "REGULAR-FILE"],
+			["literal", "\"zxcv.log\""]
+		]
+    ]
+}

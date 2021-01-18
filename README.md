@@ -1,2 +1,2 @@
 # Sandbox-Graph-Comparator
-A comparator for Apple sandbox profiles
+A comparator for Apple Sandbox profiles
