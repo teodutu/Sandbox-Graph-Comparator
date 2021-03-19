@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Not mine
+sandscout_compiler.py
+parser.out
+parsetab.py

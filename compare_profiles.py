@@ -19,7 +19,7 @@ def _get_args():
         required=True,
         help='the decompiled file of Sandbox profile')
     parser.add_argument('-r', '--regex', dest='regex', action='store_true',
-        help='compare regular expressions as strings or as automata')
+        help='compare regular expressions as automata instead of as strings')
 
     return parser.parse_args()
 
