@@ -1,23 +1,20 @@
 {
     "file-read*": [
         [
-            ["regex", "#\"*.text\""]
+            "regex(#\"*.text\")"
         ],
         [
-            ["vnode-type", "REGULAR-FILE"],
-            ["regex", "#\"[A-Z]*\""]
+            "vnode-type(regular-file)",
+            "regex(#\"[A-Z]*\")"
         ],
         [
-            ["vnode-type", "REGULAR-FILE"],
-            ["literal", "\"asdf.log\""]
-        ],
-        [
-            ["vnode-type", "BINARY-FILE"]
+            "vnode-type(regular-file)",
+            "literal(\"asdf.log\")"
         ]
     ],
     "network-inbound": [
         [
-            ["literal", "file.bin"]
+            "literal(\"file.bin\")"
         ]
     ]
 }

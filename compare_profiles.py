@@ -1,16 +1,10 @@
 from argparse import ArgumentParser
 from json import dumps, JSONEncoder, load
 
-
-class SetEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        return JSONEncoder.default(self, obj)
+from sandscout_compiler import parse_file
 
 
 def _get_args():
-    # TODO: improve descriptions?
     parser = ArgumentParser('Compare two Apple Sandbox profiles')
     parser.add_argument('-o', '--original', dest='orig', type=str,
         required=True,
@@ -24,20 +18,20 @@ def _get_args():
     return parser.parse_args()
 
 
+def _reformat_graph(old_graph):
+    return {
+        op: frozenset(frozenset(map(lambda r: tuple(r), rules)))
+            for op, rules in old_graph.items()
+    }
+
+
 def _read_graph_file(filename):
     with open(filename) as f:
-        graph = {}
-        for op, rules in load(f).items():
-            graph[op] = set(frozenset(map(
-                lambda r: tuple(map(tuple, r)),
-                rules
-            )))
-        return graph
+        return _reformat_graph(load(f))
 
 
 def read_original_file(filename):
-    # TODO: use sandbox_compiler.py
-    return _read_graph_file(filename)
+    return _reformat_graph(parse_file(filename))
 
 
 def read_decompiled_file(filename):
@@ -53,7 +47,6 @@ def _print_missing_path(sign, path):
 
 
 def _print_missing_op(sign, op, paths):
-    type = 'Missing' if sign == '-' else 'Erroneous'
     print(f'{sign * 3} {op}:')
     for path in paths:
         _print_missing_path(sign, path)
@@ -84,6 +77,7 @@ def _iterate_paths(sign, prev_err, op, paths1, paths2):
             errors = True
             if not prev_err:
                 print(f'{op}:')
+                prev_err = True
             _print_missing_path(sign, path1)
     
     return errors
@@ -105,7 +99,7 @@ def compare(original, decompiled):
 
 def main(args):
     orig = read_original_file(args.orig)
-    dec = read_original_file(args.dec)
+    dec = read_decompiled_file(args.dec)
 
     compare(orig, dec)
 

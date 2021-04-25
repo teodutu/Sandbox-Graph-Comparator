@@ -6,7 +6,7 @@
 		(vnode-type REGULAR-FILE)
 		(require-any
 			(regex #"[A-Z]*")
-			(literal "asdf.log")))
+			(literal "zxcv.log")))
 	(vnode-type BINARY-FILE))
 (allow file-write*
 	(literal "abcd.txt"))
