@@ -1,0 +1,6 @@
+[submodule "sandscout"]
+	path = sandscout
+	url = git@github.com:malus-security/sandscout.git
+[submodule "sandblaster"]
+	path = sandblaster
+	url = git@github.com:malus-security/sandblaster.git
