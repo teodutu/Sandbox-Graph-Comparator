@@ -1,7 +1,12 @@
 from argparse import ArgumentParser
-from json import dumps, JSONEncoder, load
+from json import load, dumps
+import sys
 
+# sys.path.append('/sandscout/profile_compilation')
 from sandscout_compiler import parse_file
+
+# sys.path.append('/sandblaster/reverse-sandbox')
+# from reverse_sandbox import get_dependency_graph
 
 
 def _get_args():
@@ -12,6 +17,11 @@ def _get_args():
     parser.add_argument('-d', '--decompiled', dest='dec', type=str,
         required=True,
         help='the decompiled file of Sandbox profile')
+    parser.add_argument('--ops', dest='ops', type=str, required=False,
+        help='a file containing the sandbox operations in the decompiled '
+            'profile')
+    parser.add_argument('--sbpl', dest='sbpl_orig', action='store_true',
+        help='use an SBPL (instead of binary) file for the original profile')
     parser.add_argument('-r', '--regex', dest='regex', action='store_true',
         help='compare regular expressions as automata instead of as strings')
 
@@ -19,6 +29,7 @@ def _get_args():
 
 
 def _reformat_graph(old_graph):
+    return old_graph
     return {
         op: frozenset(frozenset(map(lambda r: tuple(r), rules)))
             for op, rules in old_graph.items()
@@ -34,9 +45,10 @@ def read_original_file(filename):
     return _reformat_graph(parse_file(filename))
 
 
-def read_decompiled_file(filename):
-    # TODO: use reverse_sandbox.py
-    return _read_graph_file(filename)
+def read_decompiled_file(filename, ops, sbpl):
+    if sbpl:
+        return read_original_file(filename)
+    return _reformat_graph(get_dependency_graph(filename, ops))
 
 
 def _print_missing_path(sign, path):
@@ -99,11 +111,17 @@ def compare(original, decompiled):
 
 def main(args):
     orig = read_original_file(args.orig)
-    dec = read_decompiled_file(args.dec)
+    # dec = read_decompiled_file(args.orig, args.ops, args.sbpl_orig)
+    print(dumps(orig, indent=4))
 
-    compare(orig, dec)
+    # compare(orig, dec)
 
 
 if __name__ == "__main__":
     args = _get_args()
+    if not args.sbpl_orig and not hasattr(args, 'ops'):
+        # TODO: fa asta sa mearga
+        print('Neither --sbpl nor --ops options were given.')
+        sys.exit(1)
+
     main(args)
