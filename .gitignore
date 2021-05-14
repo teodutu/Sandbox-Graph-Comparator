@@ -133,3 +133,7 @@ dmypy.json
 sandscout_compiler.py
 parser.out
 parsetab.py
+
+
+# VSCode
+.vscode

@@ -1,12 +1,12 @@
 from argparse import ArgumentParser
-from json import load, dumps
+from json import load
 import sys
 
-# sys.path.append('/sandscout/profile_compilation')
+sys.path.append('sandscout/profile_compilation')
 from sandscout_compiler import parse_file
 
-# sys.path.append('/sandblaster/reverse-sandbox')
-# from reverse_sandbox import get_dependency_graph
+sys.path.append('sandblaster/reverse-sandbox')
+from reverse_sandbox import get_graph_for_profile
 
 
 def _get_args():
@@ -20,35 +20,44 @@ def _get_args():
     parser.add_argument('--ops', dest='ops', type=str, required=False,
         help='a file containing the sandbox operations in the decompiled '
             'profile')
+    parser.add_argument('-r', '--release', dest='release', type=str,
+        required=False, help='a file containing the sandbox operations in the '
+            'decompiled profile')
     parser.add_argument('--sbpl', dest='sbpl_orig', action='store_true',
         help='use an SBPL (instead of binary) file for the original profile')
-    parser.add_argument('-r', '--regex', dest='regex', action='store_true',
+    parser.add_argument('--regex', dest='regex', action='store_true',
         help='compare regular expressions as automata instead of as strings')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not args.sbpl_orig and (args.ops is None or args.release is None):
+        print('Invalid parameter combination. You must specify either --sbpl, '
+            'or both --ops and --release parameteres.\n')
+        print(parser.print_help())
+        sys.exit(-1)
+
+    return args
 
 
 def _reformat_graph(old_graph):
-    return old_graph
     return {
-        op: frozenset(frozenset(map(lambda r: tuple(r), rules)))
+        op: frozenset(frozenset(map(tuple, rules)))
             for op, rules in old_graph.items()
     }
 
 
 def _read_graph_file(filename):
-    with open(filename) as f:
-        return _reformat_graph(load(f))
+    with open(filename) as graph_f:
+        return _reformat_graph(load(graph_f))
 
 
 def read_original_file(filename):
     return _reformat_graph(parse_file(filename))
 
 
-def read_decompiled_file(filename, ops, sbpl):
+def read_decompiled_file(filename, ops, release, sbpl):
     if sbpl:
         return read_original_file(filename)
-    return _reformat_graph(get_dependency_graph(filename, ops))
+    return _reformat_graph(get_graph_for_profile(filename, ops, release))
 
 
 def _print_missing_path(sign, path):
@@ -58,13 +67,13 @@ def _print_missing_path(sign, path):
     print(f'{sign} }}')
 
 
-def _print_missing_op(sign, op, paths):
-    print(f'{sign * 3} {op}:')
+def _print_missing_op(sign, operation, paths):
+    print(f'{sign * 3} {operation}:')
     for path in paths:
         _print_missing_path(sign, path)
 
 
-def _iterate_paths(sign, prev_err, op, paths1, paths2):
+def _iterate_paths(sign, prev_err, operation, paths1, paths2):
     errors = False
 
     for path1 in paths1:
@@ -75,53 +84,49 @@ def _iterate_paths(sign, prev_err, op, paths1, paths2):
             if og_len != len(path2):
                 continue
 
-            nodes_found = 0
-            for node in path1:
-                # TODO: compare regexes
-                if node in path2:
-                    nodes_found += 1
-            
-            if nodes_found == og_len:
-                path_ok = True    
+            if path1 == path2:
+                path_ok = True
                 break
-        
+
         if not path_ok:
             errors = True
             if not prev_err:
-                print(f'{op}:')
+                print(f'{operation}:')
                 prev_err = True
             _print_missing_path(sign, path1)
-    
+
     return errors
 
 
-def compare(original, decompiled):	
-    for op, paths in original.items():
-        if op not in decompiled:
-            _print_missing_op('-', op, paths)
+def compare(original, decompiled):
+    errors = False
+    for oper, paths in original.items():
+        if oper not in decompiled:
+            _print_missing_op('-', oper, paths)
             continue
 
-        err = _iterate_paths('-', False, op, paths, decompiled[op])
-        _iterate_paths('+', err, op, decompiled[op], paths)
-    
-    for op in decompiled:
-        if op not in original:
-            _print_missing_op('+', op, paths)
-                
+        err = _iterate_paths('-', False, oper, paths, decompiled[oper])
+        errors = errors or err
 
-def main(args):
+        err = _iterate_paths('+', err, oper, decompiled[oper], paths)
+        errors = errors or err
+
+    for oper, paths in decompiled.items():
+        if oper not in original:
+            errors = True
+            _print_missing_op('+', oper, paths)
+
+    return errors
+
+
+def main():
+    args = _get_args()
+
     orig = read_original_file(args.orig)
-    # dec = read_decompiled_file(args.orig, args.ops, args.sbpl_orig)
-    print(dumps(orig, indent=4))
+    dec = read_decompiled_file(args.dec, args.ops, args.release, args.sbpl_orig)
 
-    # compare(orig, dec)
+    return compare(orig, dec)
 
 
 if __name__ == "__main__":
-    args = _get_args()
-    if not args.sbpl_orig and not hasattr(args, 'ops'):
-        # TODO: fa asta sa mearga
-        print('Neither --sbpl nor --ops options were given.')
-        sys.exit(1)
-
-    main(args)
+    sys.exit(main())
