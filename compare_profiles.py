@@ -45,11 +45,6 @@ def _reformat_graph(old_graph):
     }
 
 
-def _read_graph_file(filename):
-    with open(filename) as graph_f:
-        return _reformat_graph(load(graph_f))
-
-
 def read_original_file(filename):
     return _reformat_graph(parse_file(filename))
 
