@@ -17,12 +17,14 @@ def _get_args():
     parser.add_argument('-d', '--decompiled', dest='dec', type=str,
         required=True,
         help='the decompiled file of Sandbox profile')
-    parser.add_argument('--ops', dest='ops', type=str, required=False,
+    parser.add_argument('--ops', dest='ops', type=str,
         help='a file containing the sandbox operations in the decompiled '
             'profile')
-    parser.add_argument('-r', '--release', dest='release', type=str,
-        required=False, help='a file containing the sandbox operations in the '
+    parser.add_argument('-r', '--release', type=str,
+        help='a file containing the sandbox operations in the '
             'decompiled profile')
+    parser.add_argument('-p', '--profile', type=str,
+        help='the name of the profile to compare, in case of a profile bundle')
     parser.add_argument('--sbpl', dest='sbpl_orig', action='store_true',
         help='use an SBPL (instead of binary) file for the original profile')
     parser.add_argument('--regex', dest='regex', action='store_true',
@@ -49,10 +51,11 @@ def read_original_file(filename):
     return _reformat_graph(parse_file(filename))
 
 
-def read_decompiled_file(filename, ops, release, sbpl):
+def read_decompiled_file(filename, ops, release, sbpl, profile):
     if sbpl:
         return read_original_file(filename)
-    return _reformat_graph(get_graph_for_profile(filename, ops, release))
+    return _reformat_graph(get_graph_for_profile(filename, ops, release,
+        profile))
 
 
 def _print_missing_path(sign, path):
@@ -118,7 +121,8 @@ def main():
     args = _get_args()
 
     orig = read_original_file(args.orig)
-    dec = read_decompiled_file(args.dec, args.ops, args.release, args.sbpl_orig)
+    dec = read_decompiled_file(args.dec, args.ops, args.release, args.sbpl_orig,
+        args.profile)
 
     return compare(orig, dec)
 
