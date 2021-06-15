@@ -9,8 +9,8 @@ DEVICE=$1
 VERSION=$2
 
 SAMPLES_DIR="samples"
-DIFFS_DIR="${SAMPLES_DIR}/diffs/${DEVICE}"
 DEVICE_DIR="${SAMPLES_DIR}/${DEVICE}"
+DIFFS_DIR="${DEVICE_DIR}/diffs"
 SBPL_PROF_DIR="${DEVICE_DIR}/reversed_profiles"
 IS_PROFILE_BUNDLE=$(echo "${VERSION} >= 9" | bc -l)
 SB_OPS_FILE="${DEVICE_DIR}/sb_ops"
@@ -29,10 +29,10 @@ fi
 for PROFILE in $(ls ${SBPL_PROF_DIR}/*.sb); do
 	# TODO: turn these into a oneliner
 	PROFILE_NAME=$(basename $PROFILE)
-	PROFILE_NAME=${PROFILE_NAME%%.*}
+	PROFILE_NAME=${PROFILE_NAME::-3}
 	DIFF_FILE="${DIFFS_DIR}/${PROFILE_NAME}.diff"
 
-	echo "Checking profile ${PROFILE_NAME}..."
+	echo -n "Checking profile ${PROFILE_NAME}... "
 
 	if [ $IS_PROFILE_BUNDLE -eq 1 ]; then
 		BINARY_PROFILE="${BINARY_PROF_DIR}/sandbox_bundle"
@@ -42,5 +42,5 @@ for PROFILE in $(ls ${SBPL_PROF_DIR}/*.sb); do
 		python3 compare_profiles.py -o $PROFILE -d $BINARY_PROFILE -r $VERSION --ops $SB_OPS_FILE -p $PROFILE_NAME > $DIFF_FILE
 	fi
 
-	echo -e "done\n"
+	echo "done"
 done
