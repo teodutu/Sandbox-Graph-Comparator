@@ -12,7 +12,8 @@ SAMPLES_DIR="samples"
 DEVICE_DIR="${SAMPLES_DIR}/${DEVICE}"
 DIFFS_DIR="${DEVICE_DIR}/diffs"
 SBPL_PROF_DIR="${DEVICE_DIR}/reversed_profiles"
-IS_PROFILE_BUNDLE=$(echo "${VERSION} >= 9" | bc -l)
+VERSION_MAJOR=$(cut -d "." -f1 <<< $VERSION)
+IS_PROFILE_BUNDLE=$(echo "${VERSION_MAJOR} >= 9" | bc -l)
 SB_OPS_FILE="${DEVICE_DIR}/sb_ops"
 
 if [ $IS_PROFILE_BUNDLE -eq 1 ]; then
