@@ -47,6 +47,10 @@ def _reformat_graph(old_graph):
     }
 
 
+def read_json_graph(filename):
+    return _reformat_graph(load(open(filename)))
+
+
 def read_original_file(filename):
     return _reformat_graph(parse_file(filename))
 
@@ -73,6 +77,7 @@ def _print_missing_op(sign, operation, paths):
 
 def _iterate_paths(sign, prev_err, operation, paths1, paths2):
     errors = False
+    correct_paths = 0
 
     for path1 in paths1:
         og_len = len(path1)
@@ -83,6 +88,7 @@ def _iterate_paths(sign, prev_err, operation, paths1, paths2):
                 continue
 
             if path1 == path2:
+                correct_paths += 1
                 path_ok = True
                 break
 
@@ -93,26 +99,61 @@ def _iterate_paths(sign, prev_err, operation, paths1, paths2):
                 prev_err = True
             _print_missing_path(sign, path1)
 
-    return errors
+    return errors, correct_paths, len(paths1)
 
 
-def compare(original, decompiled):
+def compare(compiled, decompiled):
     errors = False
-    for oper, paths in original.items():
+
+    total_dec_paths = 0
+    total_cpl_paths = 0
+
+    correct_dec_paths = 0
+    correct_cpl_paths = 0
+
+    correct_dec_op = 0
+    correct_cpl_op = 0
+
+    for oper, paths in compiled.items():
         if oper not in decompiled:
             _print_missing_op('-', oper, paths)
             continue
+        correct_cpl_op += 1
 
-        err = _iterate_paths('-', False, oper, paths, decompiled[oper])
+        err, correct, total = _iterate_paths('-', False, oper, paths,
+            decompiled[oper])
         errors = errors or err
+        total_cpl_paths += total
+        correct_cpl_paths += correct
 
-        err = _iterate_paths('+', err, oper, decompiled[oper], paths)
+        err, correct, total = _iterate_paths('+', err, oper, decompiled[oper], paths)
         errors = errors or err
+        total_dec_paths += total
+        correct_dec_paths += correct
 
     for oper, paths in decompiled.items():
-        if oper not in original:
+        if oper not in compiled:
             errors = True
             _print_missing_op('+', oper, paths)
+        else:
+            correct_dec_op += 1
+
+    if total_dec_paths:
+        print(f'\nCorrect paths in decompiled graph: {correct_dec_paths}/{total_dec_paths}: {correct_dec_paths / total_dec_paths * 100}%')
+    else:
+        print(f'\nCorrect paths in decompiled graph: {correct_dec_paths}/{total_dec_paths}')
+    if total_cpl_paths:
+        print(f'Correct paths in compiled graph: {correct_cpl_paths}/{total_cpl_paths}: {correct_cpl_paths / total_cpl_paths * 100}%')
+    else:
+        print(f'Correct paths in compiled graph: {correct_cpl_paths}/{total_cpl_paths}')
+    if decompiled:
+        print(f'Correct operations in decompiled graph: {correct_dec_op}/{len(decompiled)}: {correct_dec_op / len(decompiled) * 100}%')
+    else:
+        print(f'Correct operations in decompiled graph: {correct_dec_op}/{len(decompiled)}')
+    if compiled:
+        print(f'Correct operations in compiled graph: {correct_cpl_op}/{len(compiled)}: {correct_cpl_op / len(compiled) * 100}%')
+    else:
+        print(f'Correct operations in compiled graph: {correct_cpl_op}/{len(compiled)}')
 
     return errors
 
